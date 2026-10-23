@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mission Erkundungsrover</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+<style>
+:root{--t:#00C1D4;--b:#143AFF;--m:#5AFFC5;--g:#D0D0CE;--d:#1A1A2E;--w:#fff;--r:#D7263D;}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;font-family:Poppins,system-ui,sans-serif;color:var(--d);background:#F4F6F8;line-height:1.45}
+button,input,select{font-family:inherit;font-size:1rem}
+button{cursor:pointer;border:0;border-radius:6px;padding:.55rem .9rem;background:var(--b);color:#fff;font-weight:600}
+button.sec{background:#fff;color:var(--b);border:1.5px solid var(--b)}
+button.t{background:var(--t);color:var(--d)}
+button.warn{background:var(--r)}
+button.sm{padding:.3rem .55rem;font-size:.85rem}
+button:disabled{opacity:.45;cursor:not-allowed}
+button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{outline:3px solid var(--t);outline-offset:2px}
+input[type=text],input[type=number],select{padding:.45rem .55rem;border:1.5px solid var(--g);border-radius:6px;background:#fff;width:100%}
+label{font-weight:500;font-size:.92rem}
+header.bar{background:var(--d);color:#fff;padding:.7rem 1rem;display:flex;gap:1rem;align-items:center;flex-wrap:wrap;border-left:10px solid var(--t)}
+header.bar h1{font-size:1.1rem;margin:0;font-weight:600}
+header.bar .sp{flex:1}
+.pill{display:inline-block;padding:.12rem .55rem;border-radius:99px;font-size:.78rem;font-weight:600;background:var(--g);color:var(--d)}
+.pill.on{background:var(--m)} .pill.off{background:#FFD1D6} .pill.b{background:var(--b);color:#fff} .pill.t{background:var(--t)}
+main{max-width:1200px;margin:0 auto;padding:1rem}
+.card{background:#fff;border-radius:8px;padding:1rem;margin-bottom:1rem;border-top:4px solid var(--t);box-shadow:0 1px 2px rgba(0,0,0,.06)}
+.card.b{border-top-color:var(--b)}
+.card h2{margin:.1rem 0 .7rem;font-size:1.05rem}
+.card h3{margin:.6rem 0 .3rem;font-size:.95rem}
+.grid{display:grid;gap:1rem;grid-template-columns:repeat(auto-fill,minmax(330px,1fr))}
+.row{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}
+.muted{color:#5b5f6b;font-size:.86rem}
+.big{font-size:1.6rem;font-weight:700}
+.money{font-variant-numeric:tabular-nums;font-weight:600}
+.neg{color:var(--r)}
+table{border-collapse:collapse;width:100%;font-size:.9rem}
+th,td{text-align:left;padding:.35rem .4rem;border-bottom:1px solid #e5e7eb;vertical-align:top}
+th{font-weight:600;background:#F4F6F8}
+.phases{display:flex;gap:4px;flex-wrap:wrap;margin:.4rem 0}
+.phases span{padding:.25rem .5rem;border-radius:5px;background:#E9ECEF;font-size:.8rem}
+.phases span.cur{background:var(--t);font-weight:700}
+.phases span.done{background:#cfeff3;color:#4a5560}
+.chk{display:flex;gap:.4rem;align-items:center;margin:.15rem 0;font-weight:400}
+.chk input{width:1.1rem;height:1.1rem}
+.toast{position:fixed;bottom:1rem;left:50%;transform:translateX(-50%);background:var(--d);color:#fff;padding:.6rem 1rem;border-radius:6px;z-index:9;max-width:90vw}
+.qr svg{width:100%;height:auto;max-width:320px;display:block}
+.timer{font-variant-numeric:tabular-nums;font-weight:700}
+/* Beamer */
+body.beamer{background:var(--d);color:#fff}
+.bm{display:grid;grid-template-columns:2fr 1fr;gap:2rem;padding:2rem 3rem;min-height:100vh}
+.bm h1{font-size:3rem;margin:.2rem 0;line-height:1.1}
+.bm .ph{color:var(--t);font-size:1.3rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+.bm .desc{font-size:1.35rem;max-width:46rem;color:#dfe3ea}
+.bm .timer{font-size:5rem;color:var(--m)}
+.bm .qr{background:#fff;padding:1rem;border-radius:10px}
+.bm table{font-size:1.15rem;color:#fff}
+.bm th{background:transparent;color:var(--t);border-color:#333a55}
+.bm td{border-color:#333a55}
+.barw{height:10px;background:#333a55;border-radius:5px;overflow:hidden;min-width:120px}
+.barw i{display:block;height:100%;background:var(--t)}
+/* Team */
+.team main{max-width:560px}
+.opt{display:block;border:1.5px solid var(--g);border-radius:8px;padding:.6rem .7rem;margin:.35rem 0;background:#fff;font-weight:400}
+.opt:has(input:checked){border-color:var(--b);background:#EEF1FF}
+.opt b{font-weight:600}
+.sum{position:sticky;bottom:0;background:#fff;border-top:2px solid var(--t);padding:.7rem;margin:0 -1rem -1rem;display:flex;justify-content:space-between;align-items:center;gap:.5rem}
+@media (max-width:800px){.bm{grid-template-columns:1fr;padding:1rem}.bm h1{font-size:2rem}.bm .timer{font-size:3rem}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div id="app" aria-live="polite"></div>
+<script>
+'use strict';
+/* ============================================================
+   KONFIGURATION – Regeln und Texte hier anpassen
+   ============================================================ */
+const CFG = {
+  cur: '$',
+  startBudget: 17000000,
+  tiers: {
+    basis:    {label:'Basis',    cost:0,       desc:'Code-Gerüst für Motoren und Sensor. Die Missionslogik schreibt das Team selbst (mit KI als Coding-Partnerin).'},
+    standard: {label:'Standard', cost:4000000, desc:'Getestete Module für Hinderniserkennung und Rückkehr. Das Team integriert und passt an.'},
+    premium:  {label:'Premium',  cost:8000000, desc:'Vollständige Missionslogik. Das Team konfiguriert nur noch.'}
+  },
+  features: {
+    probe:    {label:'Probenaufnahme (Gabelstapler)', cost:1500000},
+    gefahr:   {label:'Gefahrenerkennung',             cost:800000},
+    led:      {label:'LED-Statussignal',              cost:1000000},
+    gelaende: {label:'Geländeanpassung',              cost:1000000}
+  },
+  support: {
+    beratung: {label:'Beratung',          cost:500000},
+    debug:    {label:'Notfall-Debugging', cost:700000},
+    retest:   {label:'Re-Test (Support)', cost:1000000}
+  },
+  mandatory: [
+    {id:'ziel',      label:'Erreicht das Zielgebiet'},
+    {id:'hindernis', label:'Erkennt Hindernis per Distanzsensor und reagiert'},
+    {id:'rueckkehr', label:'Kehrt zur Basis zurück'}
+  ],
+  criteria: [
+    {id:'inno',  label:'Innovationsgrad'},
+    {id:'tech',  label:'Technische Umsetzung'},
+    {id:'pitch', label:'Pitch & Marktlogik'}
+  ],
+  roles: ['Engineering','Marketing','Finance'],
+  bonus: 1000000, freeTests: 2, extraTestPen: 500000,
+  consultLimit: 3, consultPen: 500000, alignPen: 500000, safeReturnSec: 15
+};
+const PHASES = [
+  {id:'p0', nr:'0',  name:'Einführung',              min:60,  desc:'Mission, Rollen, Budget und Spielregeln. Teams bilden und per QR-Code beitreten.'},
+  {id:'p1', nr:'1',  name:'Planung & Design',        min:10,  desc:'Rollen verteilen, Code-Stufe und Zusatzfunktionen festlegen, Budgetplan einreichen.'},
+  {id:'p2', nr:'2',  name:'Bau',                     min:120, desc:'Rover bauen und programmieren. Support-Leistungen werden verbucht.'},
+  {id:'p2a',nr:'2A', name:'Pitch 1',                 min:20,  desc:'Teams pitchen ihre Innovationsstrategie. Danach ist die Strategie fixiert.'},
+  {id:'p3', nr:'3',  name:'Validierung & Test',      min:10,  desc:'Testläufe auf dem simulierten Gelände. Die ersten zwei Läufe sind frei.'},
+  {id:'p4', nr:'4',  name:'Alignment-Check',         min:10,  desc:'Engineering, Marketing und Finance erklären dieselbe Strategie. Fehlende Abstimmung kostet.'},
+  {id:'p5', nr:'5',  name:'Final-Pitch & Live-Test', min:30,  desc:'Abschlusspräsentation und Live-Test vor allen Teams.'},
+  {id:'p6', nr:'6',  name:'Voting & Ergebnis',       min:15,  desc:'Peer-Voting und Auflösung des Rankings.'}
+];
+const FORMATS = {
+  woche1:  {label:'Modulwoche 1 (225 Min. = 90 + 90 + 45)', skip:[], minutes:{p0:20,p1:15,p2:100,p2a:15,p3:10,p4:10,p5:40,p6:15}, note:'Vorlesung (2 TWS) und Übung (3 TWS) der ersten Woche zusammengelegt.'},
+  voll:    {label:'Vollversion (ca. 4–4,5 h)', skip:[], minutes:{}, note:'Alle Phasen inklusive erstem Pitch.'},
+  ohnep1:  {label:'3 h – ohne ersten Pitch', skip:['p2a'], minutes:{p0:30}, note:'Phase 2A entfällt.'},
+  chassis: {label:'3 h – vormontiertes Chassis', skip:[], minutes:{p0:30,p2:60}, note:'Fokus auf Software, Funktionen und Strategie.'},
+  demo:    {label:'Kurzdemo (ca. 30 Min., z. B. Lehrprobe)', skip:[], minutes:{p0:5,p1:8}, note:'Nur Einführung und Planung live, Rest als Ausblick.'}
+};
+
+/* ============================================================
+   HILFSFUNKTIONEN
+   ============================================================ */
+const app = document.getElementById('app');
+const P = new URLSearchParams(location.search);
+const MODE = P.get('host')==='true' ? 'host' : (P.get('view')==='beamer' ? 'beamer' : 'team');
+const LS = 'odce_erkundungsrover_state_v1';
+const PFX = 'odce-erkundungsrover-';
+const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const cleanCode = c => String(c||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,12);
+const fmtM = v => (v/1e6).toLocaleString('de-DE',{minimumFractionDigits:1,maximumFractionDigits:2})+' Mio. '+CFG.cur;
+const uid = () => Math.random().toString(36).slice(2,10);
+const phaseById = id => PHASES.find(p => p.id===id);
+const activePhases = s => PHASES.filter(p => !((FORMATS[s.format]||{}).skip||[]).includes(p.id));
+const phaseMin = (s,id) => { const f=FORMATS[s.format]||{}; const p=phaseById(id); return (f.minutes&&f.minutes[id]) || (p?p.min:10); };
+const baseURL = () => location.origin + location.pathname;
+const teamURL = code => baseURL() + '?s=' + encodeURIComponent(code);
+const beamerURL = code => baseURL() + '?view=beamer&s=' + encodeURIComponent(code);
+const phaseIdx = s => activePhases(s).findIndex(p => p.id===s.phase);
+const atOrAfter = (s,id) => { const a=activePhases(s); const i=a.findIndex(p=>p.id===s.phase), j=a.findIndex(p=>p.id===id); return j>=0 && i>=j; };
+
+function qrSVG(url){
+  if (typeof qrcode !== 'function') return '<p class="muted">QR-Bibliothek nicht geladen. URL: '+esc(url)+'</p>';
+  try { const q=qrcode(0,'M'); q.addData(url); q.make(); return q.createSvgTag({cellSize:6, margin:2, scalable:true}); }
+  catch(e){ return '<p class="muted">'+esc(url)+'</p>'; }
+}
+let toastT=null;
+function toast(msg){
+  let el=document.querySelector('.toast'); if(!el){ el=document.createElement('div'); el.className='toast'; el.setAttribute('role','status'); document.body.appendChild(el); }
+  el.textContent=msg; clearTimeout(toastT); toastT=setTimeout(()=>el.remove(),3200);
+}
+function remainingMs(s){
+  if (!s.started) return null;
+  if (s.paused!=null) return s.paused;
+  if (!s.phaseEnd) return null;
+  return s.phaseEnd - Date.now();
+}
+function fmtTime(ms){
+  if (ms==null) return '–';
+  const neg = ms<0; const t=Math.round(Math.abs(ms)/1000);
+  return (neg?'−':'') + String(Math.floor(t/60)).padStart(2,'0') + ':' + String(t%60).padStart(2,'0');
+}
+
+/* ============================================================
+   ZUSTAND UND BERECHNUNG
+   ============================================================ */
+function newTeam(name){
+  return {id:uid(), name, company:'', tier:null, features:[], ledger:[], tests:0, consults:0,
+          alignFail:false, mandatory:{}, safe:false, failure:false, members:[], plan:null};
+}
+function newState(){
+  return {v:1, code:'HSU26', date:new Date().toISOString().slice(0,10), facilitator:'', format:'woche1',
+          voteValue:100000, autoApply:false, started:false, phase:'p0', phaseEnd:null, paused:null,
+          teams:['Team Alpha','Team Beta','Team Gamma','Team Delta'].map(newTeam),
+          queue:[], votes:{}, reveal:false};
+}
+function calc(t, s){
+  const tierCost = t.tier && CFG.tiers[t.tier] ? CFG.tiers[t.tier].cost : 0;
+  const featCost = t.features.reduce((a,f)=>a+((CFG.features[f]||{}).cost||0),0);
+  const supCost  = t.ledger.reduce((a,e)=>a+e.cost,0);
+  const testPen  = Math.max(0, t.tests-CFG.freeTests)*CFG.extraTestPen;
+  const consultPen = t.consults>=CFG.consultLimit ? CFG.consultPen : 0;
+  const alignPen = t.alignFail ? CFG.alignPen : 0;
+  const pen = testPen+consultPen+alignPen;
+  const rest = CFG.startBudget - tierCost - featCost - supCost - pen;
+  const allReq = CFG.mandatory.every(m => t.mandatory[m.id]);
+  const live = s ? atOrAfter(s,'p5') : false;
+  const bonuses = {safe: live && t.safe, all: live && allReq, nopen: live && pen===0, nofail: live && !t.failure};
+  const bonus = Object.values(bonuses).filter(Boolean).length*CFG.bonus;
+  let votePts = 0;
+  if (s) Object.values(s.votes).forEach(v => { if (v.voterTeam!==t.id && v.scores && v.scores[t.id]) CFG.criteria.forEach(c => votePts += Number(v.scores[t.id][c.id]||0)); });
+  const voteFactor = (live && !allReq) ? 0.5 : 1;
+  const voteVal = votePts*voteFactor*(s?s.voteValue:0);
+  return {tierCost, featCost, supCost, testPen, consultPen, alignPen, pen, rest, allReq, bonuses, bonus, votePts, voteFactor, voteVal, total: rest+bonus+voteVal};
+}
+function pub(){
+  return {code:st.code, started:st.started, phase:st.phase, format:st.format, phaseEnd:st.phaseEnd, paused:st.paused,
+    skip:(FORMATS[st.format]||{}).skip||[], reveal:st.reveal, now:Date.now(),
+    teams: st.teams.map(t => { const c=calc(t,st); return {id:t.id, name:t.name, company:t.company, tier:t.tier, features:t.features,
+      rest:c.rest, tests:t.tests, consults:t.consults, members:t.members.map(m=>({id:m.id,name:m.name,role:m.role})),
+      planStatus: t.plan ? (t.plan.applied?'übernommen':'eingereicht') : null,
+      result: st.reveal ? {bonus:c.bonus, votePts:c.votePts, voteVal:c.voteVal, total:c.total, allReq:c.allReq} : null}; }),
+    queue: st.queue.map(q => ({qid:q.qid, type:q.type, teamId:q.teamId, kind:q.kind||null, status:q.status})),
+    voted: Object.keys(st.votes)};
+}
+
+/* ============================================================
+   NETZWERK (PeerJS) UND LOKALE SYNCHRONISATION
+   ============================================================ */
+let st = null, pubS = null, peer = null, conns = [], hostConn = null, netStatus = 'offline';
+const myId = localStorage.getItem('odce_er_client') || uid();
+localStorage.setItem('odce_er_client', myId);
+let bc = null; try { bc = new BroadcastChannel('odce_erkundungsrover'); } catch(e) {}
+
+function startPeer(){
+  if (typeof Peer !== 'function'){ netStatus='PeerJS nicht geladen (nur lokal)'; render(); return; }
+  try { if (peer) peer.destroy(); } catch(e) {}
+  conns = []; netStatus = 'verbinde …';
+  peer = new Peer(PFX+st.code, {debug:0});
+  peer.on('open', () => { netStatus='online'; render(); });
+  peer.on('connection', c => {
+    conns.push(c);
+    c.on('open', () => { c.send({t:'state', s:pub()}); render(); });
+    c.on('data', d => onClientMsg(c, d));
+    c.on('close', () => { conns = conns.filter(x => x!==c); render(); });
+  });
+  peer.on('disconnected', () => { netStatus='getrennt, verbinde neu …'; render(); try { peer.reconnect(); } catch(e) {} });
+  peer.on('error', e => {
+    netStatus = e && e.type==='unavailable-id' ? 'Code bereits belegt (andere Spielleitung offen?)' : 'Netzfehler: '+(e&&e.type||e);
+    render();
+  });
+}
+function broadcast(){
+  const p = pub();
+  conns.forEach(c => { try { if (c.open) c.send({t:'state', s:p}); } catch(e) {} });
+  if (bc) try { bc.postMessage({t:'state', s:p}); } catch(e) {}
+}
+function save(){ try { localStorage.setItem(LS, JSON.stringify(st)); } catch(e) {} }
+function commit(){ save(); broadcast(); render(); }
+
+function onClientMsg(c, d){
+  if (!d || typeof d!=='object') return;
+  const team = st.teams.find(t => t.id===d.team);
+  const ack = msg => { try { c.send({t:'ack', msg}); } catch(e) {} };
+  switch (d.t){
+    case 'hello': c.send({t:'state', s:pub()}); return;
+    case 'join': {
+      if (!team) return ack('Team nicht gefunden.');
+      st.teams.forEach(t => t.members = t.members.filter(m => m.id!==d.id));
+      team.members.push({id:d.id, name:String(d.name||'').slice(0,30), role: CFG.roles.includes(d.role)?d.role:CFG.roles[0]});
+      commit(); return ack('Willkommen bei '+team.name+'.');
+    }
+    case 'plan': {
+      if (!team) return;
+      if (!['p0','p1'].includes(st.phase)) return ack('Planung ist nur in Phase 0 und 1 möglich.');
+      const plan = {tier: CFG.tiers[d.tier]?d.tier:'basis', features:(d.features||[]).filter(f=>CFG.features[f]),
+                    company:String(d.company||'').slice(0,40), at:Date.now(), applied:false};
+      team.plan = plan;
+      st.queue = st.queue.filter(q => !(q.type==='plan' && q.teamId===team.id && q.status==='offen'));
+      if (st.autoApply) applyPlan(team);
+      else st.queue.push({qid:uid(), type:'plan', teamId:team.id, status:'offen', at:Date.now()});
+      commit(); return ack(st.autoApply ? 'Plan übernommen.' : 'Plan eingereicht. Die Spielleitung prüft.');
+    }
+    case 'support': {
+      if (!team || !CFG.support[d.kind]) return;
+      st.queue.push({qid:uid(), type:'support', teamId:team.id, kind:d.kind, by:String(d.name||'').slice(0,30), status:'offen', at:Date.now()});
+      commit(); return ack('Anfrage gesendet: '+CFG.support[d.kind].label+'.');
+    }
+    case 'vote': {
+      if (st.phase!=='p6') return ack('Voting ist erst in Phase 6 geöffnet.');
+      const scores = {};
+      st.teams.forEach(t => { if (t.id!==d.team && d.scores && d.scores[t.id]) { scores[t.id]={}; CFG.criteria.forEach(k => scores[t.id][k.id]=Math.max(0,Math.min(5,Number(d.scores[t.id][k.id])||0))); } });
+      st.votes[d.id] = {voterTeam:d.team, scores, at:Date.now()};
+      commit(); return ack('Stimme gespeichert.');
+    }
+  }
+}
+function applyPlan(t){
+  if (!t.plan) return;
+  t.tier = t.plan.tier; t.features = t.plan.features.slice(); if (t.plan.company) t.company = t.plan.company;
+  t.plan.applied = true;
+}
+function bookSupport(t, kind){
+  const s = CFG.support[kind]; if (!s) return;
+  t.ledger.push({label:s.label, kind, cost:s.cost, at:Date.now()});
+  if (kind==='beratung') t.consults++;
+}
+function setPhase(id){
+  st.phase = id; st.paused = null; st.phaseEnd = Date.now() + phaseMin(st,id)*60000;
+}
+
+/* ============================================================
+   SPIELLEITUNG (HOST)
+   ============================================================ */
+let hostTab = 'steuerung';
+function renderHost(){
+  document.body.className = '';
+  const ph = phaseById(st.phase), act = activePhases(st), idx = phaseIdx(st);
+  const openQ = st.queue.filter(q => q.status==='offen');
+  const head = `<header class="bar"><h1>Mission Erkundungsrover · Spielleitung</h1>
+    <span class="pill b">Code ${esc(st.code)}</span>
+    <span class="pill ${netStatus==='online'?'on':'off'}">${esc(netStatus)}</span>
+    <span class="pill">${conns.length} Geräte</span><span class="sp"></span>
+    ${st.started?`<a class="pill t" href="${esc(beamerURL(st.code))}" target="_blank" rel="noopener">Beamer-Ansicht öffnen</a>`:''}</header>`;
+  if (!st.started){
+    app.innerHTML = head + `<main>
+    <section class="card"><h2>Sitzung anlegen</h2>
+      <div class="grid">
+        <p><label>Sitzungscode<br><input type="text" data-bind="code" value="${esc(st.code)}" maxlength="12"></label><br>
+           <span class="muted">Bleibt der Code gleich (z. B. HSU26), bleibt auch der QR-Code auf den Folien gültig.</span></p>
+        <p><label>Format<br><select data-bind="format">${Object.entries(FORMATS).map(([k,f])=>`<option value="${k}" ${st.format===k?'selected':''}>${esc(f.label)}</option>`).join('')}</select></label><br>
+           <span class="muted">${esc((FORMATS[st.format]||{}).note||'')}</span></p>
+        <p><label>Spielleitung<br><input type="text" data-bind="facilitator" value="${esc(st.facilitator)}"></label></p>
+        <p><label>Wert pro Voting-Punkt (${esc(CFG.cur)})<br><input type="number" min="0" step="10000" data-bind="voteValue" value="${st.voteValue}"></label></p>
+      </div>
+      <h3>Teams</h3>
+      ${st.teams.map(t=>`<div class="row" style="margin:.25rem 0"><input type="text" data-tname="${t.id}" value="${esc(t.name)}" aria-label="Teamname" style="max-width:320px">
+        <button class="sec sm" data-act="delteam" data-id="${t.id}" ${st.teams.length<=2?'disabled':''}>Entfernen</button></div>`).join('')}
+      <div class="row" style="margin-top:.5rem"><button class="sec" data-act="addteam">Team hinzufügen</button>
+        <span class="sp" style="flex:1"></span><button data-act="start">Sitzung starten</button></div>
+      <p class="muted">Phasen: ${act.map(p=>esc(p.nr+' '+p.name)+' ('+phaseMin(st,p.id)+' Min.)').join(' · ')}</p>
+    </section></main>`;
+    return;
+  }
+  const tabs = [['steuerung','Steuerung'],['teams','Teams & Buchungen'],['anfragen','Anfragen ('+openQ.length+')'],['ergebnis','Ergebnis']];
+  let body = '';
+  if (hostTab==='steuerung'){
+    body = `<section class="card"><h2>Phase ${esc(ph.nr)}: ${esc(ph.name)}</h2>
+      <div class="phases">${act.map((p,i)=>`<span class="${i===idx?'cur':(i<idx?'done':'')}">${esc(p.nr)} ${esc(p.name)}</span>`).join('')}</div>
+      <p>${esc(ph.desc)}</p>
+      <p class="big timer" data-timer>${fmtTime(remainingMs(st))}</p>
+      <div class="row">
+        <button class="sec" data-act="prev" ${idx<=0?'disabled':''}>Zurück</button>
+        <button data-act="next" ${idx>=act.length-1?'disabled':''}>Nächste Phase</button>
+        <button class="sec" data-act="pause">${st.paused!=null?'Fortsetzen':'Pause'}</button>
+        <button class="sec" data-act="plus">+2 Min.</button>
+        <label class="chk"><input type="checkbox" data-bind="autoApply" ${st.autoApply?'checked':''}> Pläne automatisch übernehmen</label>
+      </div></section>
+      <section class="card b"><h2>Beitritt</h2><div class="row" style="align-items:flex-start;gap:1.5rem">
+        <div class="qr" style="width:220px">${qrSVG(teamURL(st.code))}</div>
+        <div><p><b>Team-URL:</b><br><span class="muted">${esc(teamURL(st.code))}</span></p>
+        <p><b>Beigetreten:</b> ${st.teams.reduce((a,t)=>a+t.members.length,0)} Personen</p>
+        ${st.teams.map(t=>`<div class="muted">${esc(t.name)}: ${t.members.map(m=>esc(m.name)+' ('+esc(m.role)+')').join(', ')||'–'}</div>`).join('')}</div></div></section>`;
+  }
+  if (hostTab==='teams'){
+    body = `<div class="grid">${st.teams.map(t=>{ const c=calc(t,st); return `<section class="card">
+      <h2>${esc(t.name)}${t.company?' · '+esc(t.company):''}</h2>
+      <p>Restbudget: <span class="money ${c.rest<0?'neg':''}">${fmtM(c.rest)}</span></p>
+      <label>Code-Stufe<br><select data-tf="tier" data-id="${t.id}"><option value="">– keine –</option>${Object.entries(CFG.tiers).map(([k,v])=>`<option value="${k}" ${t.tier===k?'selected':''}>${esc(v.label)} (${fmtM(v.cost)})</option>`).join('')}</select></label>
+      <h3>Zusatzfunktionen</h3>${Object.entries(CFG.features).map(([k,v])=>`<label class="chk"><input type="checkbox" data-tf="feat" data-id="${t.id}" data-k="${k}" ${t.features.includes(k)?'checked':''}> ${esc(v.label)} (${fmtM(v.cost)})</label>`).join('')}
+      <h3>Support & Tests</h3><div class="row">${Object.entries(CFG.support).map(([k,v])=>`<button class="sec sm" data-act="book" data-id="${t.id}" data-k="${k}">+ ${esc(v.label)}</button>`).join('')}
+        <button class="sec sm" data-act="test" data-id="${t.id}">+ Testlauf (${t.tests})</button>
+        <button class="sec sm" data-act="undo" data-id="${t.id}" ${t.ledger.length?'':'disabled'}>Letzte Buchung zurück</button></div>
+      <p class="muted">Beratungen: ${t.consults} · Abzüge: ${fmtM(c.pen)} · Support: ${fmtM(c.supCost)}</p>
+      <label class="chk"><input type="checkbox" data-tf="align" data-id="${t.id}" ${t.alignFail?'checked':''}> Alignment fehlt (−${fmtM(CFG.alignPen)})</label>
+      <h3>Live-Test</h3>${CFG.mandatory.map(m=>`<label class="chk"><input type="checkbox" data-tf="mand" data-id="${t.id}" data-k="${m.id}" ${t.mandatory[m.id]?'checked':''}> ${esc(m.label)}</label>`).join('')}
+      <label class="chk"><input type="checkbox" data-tf="safe" data-id="${t.id}" ${t.safe?'checked':''}> Sichere Rückkehr in ≤ ${CFG.safeReturnSec} s</label>
+      <label class="chk"><input type="checkbox" data-tf="failure" data-id="${t.id}" ${t.failure?'checked':''}> Systemausfall aufgetreten</label>
+      <p class="muted">Mitglieder: ${t.members.map(m=>esc(m.name)+' ('+esc(m.role)+')').join(', ')||'–'}</p></section>`; }).join('')}</div>`;
+  }
+  if (hostTab==='anfragen'){
+    const rows = st.queue.slice().reverse().map(q => { const t=st.teams.find(x=>x.id===q.teamId); if(!t) return '';
+      const what = q.type==='plan' && t.plan ? `Plan: ${esc(CFG.tiers[t.plan.tier].label)}${t.plan.features.length?' + '+t.plan.features.map(f=>esc(CFG.features[f].label)).join(', '):''}${t.plan.company?' · Firma „'+esc(t.plan.company)+'“':''}`
+        : (q.type==='support' ? `${esc(CFG.support[q.kind].label)} (${fmtM(CFG.support[q.kind].cost)})${q.by?' · '+esc(q.by):''}` : '');
+      return `<tr><td>${new Date(q.at).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})}</td><td>${esc(t.name)}</td><td>${what}</td><td>${q.status==='offen'
+        ? `<button class="sm" data-act="qok" data-q="${q.qid}">${q.type==='plan'?'Übernehmen':'Buchen'}</button> <button class="sec sm" data-act="qno" data-q="${q.qid}">Ablehnen</button>` : esc(q.status)}</td></tr>`; }).join('');
+    body = `<section class="card"><h2>Anfragen der Teams</h2>${rows?`<table><thead><tr><th>Zeit</th><th>Team</th><th>Anfrage</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table>`:'<p class="muted">Noch keine Anfragen.</p>'}</section>`;
+  }
+  if (hostTab==='ergebnis'){
+    const res = st.teams.map(t => ({t, c:calc(t,st)})).sort((a,b)=>b.c.total-a.c.total);
+    body = `<section class="card"><h2>Ergebnis</h2>
+      <p class="muted">Gesamt = Restbudget + Boni (je ${fmtM(CFG.bonus)}, ab Phase 5) + Voting-Punkte × ${fmtM(st.voteValue)}. Pflichtanforderung verfehlt: Stimmen × 0,5. Abgegebene Stimmen: ${Object.keys(st.votes).length}.</p>
+      <table><thead><tr><th>#</th><th>Team</th><th>Restbudget</th><th>Boni</th><th>Voting</th><th>Pflicht</th><th>Gesamt</th></tr></thead><tbody>
+      ${res.map((r,i)=>`<tr><td>${i+1}</td><td>${esc(r.t.name)}</td><td class="money">${fmtM(r.c.rest)}</td><td class="money">${fmtM(r.c.bonus)}</td><td>${r.c.votePts} Pkt. → ${fmtM(r.c.voteVal)}</td><td>${r.c.allReq?'erfüllt':'verfehlt'}</td><td class="money">${fmtM(r.c.total)}</td></tr>`).join('')}
+      </tbody></table>
+      <div class="row" style="margin-top:.8rem"><button data-act="reveal">${st.reveal?'Ergebnis verbergen':'Ergebnis aufdecken'}</button>
+        <button class="sec" data-act="csv">CSV exportieren</button><button class="sec" data-act="json">JSON exportieren</button>
+        <button class="warn" data-act="reset">Sitzung zurücksetzen</button></div></section>`;
+  }
+  app.innerHTML = head + `<main><nav class="row" style="margin-bottom:1rem" aria-label="Bereiche">${tabs.map(([k,l])=>`<button class="${hostTab===k?'':'sec'}" data-act="tab" data-k="${k}" aria-pressed="${hostTab===k}">${esc(l)}</button>`).join('')}</nav>${body}</main>`;
+}
+
+function download(name, text, type){
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([text],{type})); a.download=name; document.body.appendChild(a); a.click(); a.remove();
+}
+function hostClick(e){
+  const el = e.target.closest('[data-act]'); if (!el) return;
+  const a = el.dataset.act, t = st.teams.find(x => x.id===el.dataset.id);
+  const act = activePhases(st), i = phaseIdx(st);
+  switch (a){
+    case 'tab': hostTab = el.dataset.k; render(); return;
+    case 'addteam': st.teams.push(newTeam('Team '+(st.teams.length+1))); break;
+    case 'delteam': st.teams = st.teams.filter(x => x.id!==el.dataset.id); break;
+    case 'start': st.started = true; setPhase(act[0].id); startPeer(); break;
+    case 'next': if (i<act.length-1) setPhase(act[i+1].id); break;
+    case 'prev': if (i>0) setPhase(act[i-1].id); break;
+    case 'pause': if (st.paused!=null){ st.phaseEnd = Date.now()+st.paused; st.paused=null; } else { st.paused = st.phaseEnd-Date.now(); } break;
+    case 'plus': if (st.paused!=null) st.paused += 120000; else st.phaseEnd += 120000; break;
+    case 'book': if (t) bookSupport(t, el.dataset.k); break;
+    case 'test': if (t) t.tests++; break;
+    case 'undo': if (t && t.ledger.length){ const e2=t.ledger.pop(); if (e2.kind==='beratung') t.consults=Math.max(0,t.consults-1); } break;
+    case 'qok': case 'qno': {
+      const q = st.queue.find(x => x.qid===el.dataset.q); if (!q) return;
+      const tt = st.teams.find(x => x.id===q.teamId);
+      if (a==='qok' && tt){ if (q.type==='plan') applyPlan(tt); else bookSupport(tt, q.kind); q.status = q.type==='plan'?'übernommen':'gebucht'; }
+      else q.status = 'abgelehnt';
+      break;
+    }
+    case 'reveal': st.reveal = !st.reveal; break;
+    case 'csv': {
+      const head=['Team','Firma','Code-Stufe','Funktionen','Support','Tests','Beratungen','Abzuege','Restbudget','Boni','Voting-Punkte','Pflicht','Gesamt'];
+      const rows=st.teams.map(t=>{const c=calc(t,st);return [t.name,t.company,t.tier||'',t.features.join(' | '),c.supCost,t.tests,t.consults,c.pen,c.rest,c.bonus,c.votePts,c.allReq?'ja':'nein',c.total];});
+      download('erkundungsrover_'+st.code+'.csv', [head,...rows].map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\n'), 'text/csv;charset=utf-8');
+      return;
+    }
+    case 'json': download('erkundungsrover_'+st.code+'.json', JSON.stringify(st,null,2), 'application/json'); return;
+    case 'reset':
+      if (confirm('Sitzung wirklich zurücksetzen? Alle Daten dieser Sitzung gehen verloren.')){ const code=st.code, fmt=st.format; st=newState(); st.code=code; st.format=fmt; hostTab='steuerung'; try{ if(peer) peer.destroy(); }catch(x){} peer=null; conns=[]; netStatus='offline'; }
+      else return;
+      break;
+    default: return;
+  }
+  commit();
+}
+function hostChange(e){
+  const el = e.target;
+  if (el.dataset.bind){
+    const k = el.dataset.bind;
+    if (k==='code'){ st.code = cleanCode(el.value)||'HSU26'; }
+    else if (k==='autoApply'){ st.autoApply = el.checked; }
+    else if (k==='voteValue'){ st.voteValue = Math.max(0, Number(el.value)||0); }
+    else st[k] = el.value;
+    return commit();
+  }
+  if (el.dataset.tname){ const t=st.teams.find(x=>x.id===el.dataset.tname); if (t) t.name = el.value.slice(0,30)||t.name; return commit(); }
+  if (el.dataset.tf){
+    const t = st.teams.find(x => x.id===el.dataset.id); if (!t) return;
+    const f = el.dataset.tf, k = el.dataset.k;
+    if (f==='tier') t.tier = el.value||null;
+    if (f==='feat') t.features = el.checked ? [...new Set([...t.features,k])] : t.features.filter(x=>x!==k);
+    if (f==='align') t.alignFail = el.checked;
+    if (f==='mand') t.mandatory[k] = el.checked;
+    if (f==='safe') t.safe = el.checked;
+    if (f==='failure') t.failure = el.checked;
+    commit();
+  }
+}
+
+/* ============================================================
+   BEAMER
+   ============================================================ */
+function renderBeamer(){
+  document.body.className = 'beamer';
+  const s = pubS;
+  if (!s){ app.innerHTML = `<div class="bm"><div><p class="ph">Mission Erkundungsrover</p><h1>Warte auf Spielleitung …</h1><p class="desc">${esc(netStatus)}</p></div></div>`; return; }
+  const ph = phaseById(s.phase) || PHASES[0];
+  const max = CFG.startBudget;
+  let right;
+  if (s.reveal){
+    const r = s.teams.filter(t=>t.result).sort((a,b)=>b.result.total-a.result.total);
+    right = `<table><thead><tr><th>#</th><th>Team</th><th>Gesamt</th></tr></thead><tbody>${r.map((t,i)=>`<tr><td>${i+1}</td><td>${esc(t.name)}${t.result.allReq?'':' <span class="pill off">Pflicht verfehlt</span>'}</td><td class="money">${fmtM(t.result.total)}</td></tr>`).join('')}</tbody></table>`;
+  } else if (['p0','p1'].includes(s.phase) || !s.started){
+    right = `<div class="qr">${qrSVG(teamURL(s.code))}</div><p style="font-size:1.1rem">Code <b>${esc(s.code)}</b><br><span style="color:#aab">${esc(teamURL(s.code))}</span></p>`;
+  } else {
+    right = `<table><thead><tr><th>Team</th><th>Restbudget</th></tr></thead><tbody>${s.teams.map(t=>`<tr><td>${esc(t.name)}<div class="barw"><i style="width:${Math.max(0,Math.min(100,t.rest/max*100))}%"></i></div></td><td class="money">${fmtM(t.rest)}</td></tr>`).join('')}</tbody></table>`;
+  }
+  app.innerHTML = `<div class="bm"><div>
+    <p class="ph">Phase ${esc(ph.nr)}</p><h1>${esc(ph.name)}</h1><p class="desc">${esc(ph.desc)}</p>
+    <p class="timer" data-timer>${fmtTime(clientRemaining())}</p>
+    ${['p0','p1','p2','p2a','p3','p4','p5','p6'].includes(s.phase)?`<p class="desc">${s.teams.map(t=>esc(t.name)+': '+t.members.length+(t.planStatus?' · Plan '+t.planStatus:'')).join(' &nbsp;|&nbsp; ')}</p>`:''}
+    </div><div>${right}</div></div>`;
+}
+let clockSkew = 0;
+function clientRemaining(){
+  const s = pubS; if (!s || !s.started) return null;
+  if (s.paused!=null) return s.paused;
+  return s.phaseEnd ? s.phaseEnd - (Date.now()+clockSkew) : null;
+}
+
+/* ============================================================
+   TEAM (SMARTPHONE)
+   ============================================================ */
+const CODE = cleanCode(P.get('s')) || 'HSU26';
+const JKEY = 'odce_er_join_'+CODE;
+let me = null; try { me = JSON.parse(localStorage.getItem(JKEY)||'null'); } catch(e) {}
+let draft = {tier:'basis', features:[], company:''};
+let voteDraft = {};
+function send(m){
+  m.id = myId;
+  if (hostConn && hostConn.open){ try { hostConn.send(m); } catch(e) { toast('Senden fehlgeschlagen.'); } }
+  else toast('Keine Verbindung zur Spielleitung.');
+}
+function renderTeam(){
+  document.body.className = 'team';
+  const s = pubS;
+  const head = `<header class="bar"><h1>Mission Erkundungsrover</h1><span class="sp"></span><span class="pill ${hostConn&&hostConn.open?'on':'off'}">${esc(hostConn&&hostConn.open?'verbunden':netStatus)}</span></header>`;
+  if (!s){ app.innerHTML = head+`<main><section class="card"><h2>Verbinde mit Sitzung ${esc(CODE)} …</h2><p class="muted">${esc(netStatus)}</p><p class="muted">Falls es nicht klappt: WLAN wechseln oder mobilen Hotspot nutzen.</p></section></main>`; return; }
+  const myTeam = me && s.teams.find(t => t.id===me.team && t.members.some(m=>m.id===myId));
+  if (!myTeam){
+    app.innerHTML = head+`<main><section class="card"><h2>Beitreten</h2>
+      <p><label>Vorname<br><input type="text" id="jn" maxlength="30" value="${esc(me&&me.name||'')}" autocomplete="given-name"></label></p>
+      <p><label>Team<br><select id="jt">${s.teams.map(t=>`<option value="${t.id}" ${me&&me.team===t.id?'selected':''}>${esc(t.name)} (${t.members.length})</option>`).join('')}</select></label></p>
+      <p><label>Rolle<br><select id="jr">${CFG.roles.map(r=>`<option ${me&&me.role===r?'selected':''}>${esc(r)}</option>`).join('')}</select></label></p>
+      <button data-act="join">Beitreten</button>
+      <p class="muted">Gespeichert werden nur Vorname, Team und Rolle, im Browser der Spielleitung.</p></section></main>`;
+    return;
+  }
+  const ph = phaseById(s.phase)||PHASES[0];
+  let body = `<section class="card b"><h2>${esc(myTeam.name)}${myTeam.company?' · '+esc(myTeam.company):''}</h2>
+    <p>Sie: <b>${esc(me.name)}</b> (${esc(me.role)}) · <button class="sec sm" data-act="leave">Team wechseln</button></p>
+    <p>Phase ${esc(ph.nr)}: <b>${esc(ph.name)}</b> · <span class="timer" data-timer>${fmtTime(clientRemaining())}</span></p>
+    <p>Restbudget: <span class="money ${myTeam.rest<0?'neg':''}">${fmtM(myTeam.rest)}</span></p>
+    <p class="muted">${esc(ph.desc)}</p></section>`;
+  if (s.reveal){
+    const r = s.teams.filter(t=>t.result).sort((a,b)=>b.result.total-a.result.total);
+    body += `<section class="card"><h2>Ergebnis</h2><table><tbody>${r.map((t,i)=>`<tr><td>${i+1}</td><td>${esc(t.name)}</td><td class="money">${fmtM(t.result.total)}</td></tr>`).join('')}</tbody></table></section>`;
+  } else if (['p0','p1'].includes(s.phase)){
+    const cost = (CFG.tiers[draft.tier]||{cost:0}).cost + draft.features.reduce((a,f)=>a+CFG.features[f].cost,0);
+    body += `<section class="card"><h2>Budgetplan</h2>
+      ${myTeam.planStatus?`<p><span class="pill t">Plan ${esc(myTeam.planStatus)}</span></p>`:''}
+      <p><label>Firmenname<br><input type="text" id="pc" maxlength="40" value="${esc(draft.company||myTeam.company||'')}"></label></p>
+      <h3>Code-Stufe</h3>${Object.entries(CFG.tiers).map(([k,v])=>`<label class="opt"><input type="radio" name="tier" value="${k}" data-d="tier" ${draft.tier===k?'checked':''}> <b>${esc(v.label)}</b> · ${fmtM(v.cost)}<br><span class="muted">${esc(v.desc)}</span></label>`).join('')}
+      <h3>Zusatzfunktionen</h3>${Object.entries(CFG.features).map(([k,v])=>`<label class="opt"><input type="checkbox" value="${k}" data-d="feat" ${draft.features.includes(k)?'checked':''}> <b>${esc(v.label)}</b> · ${fmtM(v.cost)}</label>`).join('')}
+      <p class="muted">Pflicht im Live-Test: ${CFG.mandatory.map(m=>esc(m.label)).join(' · ')}. Support und zusätzliche Testläufe kosten extra, planen Sie Reserve ein.</p>
+      <div class="sum"><span>Geplant: <b class="money">${fmtM(cost)}</b><br><span class="muted">Rest: ${fmtM(CFG.startBudget-cost)}</span></span><button data-act="plan">Plan einreichen</button></div></section>`;
+  } else if (s.phase==='p6'){
+    const others = s.teams.filter(t => t.id!==myTeam.id);
+    const done = s.voted.includes(myId);
+    body += `<section class="card"><h2>Peer-Voting</h2>${done?'<p><span class="pill on">Stimme abgegeben</span> Sie können sie bis zum Ende ändern.</p>':''}
+      ${others.map(t=>`<h3>${esc(t.name)}</h3>${CFG.criteria.map(c=>`<label>${esc(c.label)}<br><select data-v="${t.id}" data-c="${c.id}">${[0,1,2,3,4,5].map(n=>`<option ${Number((voteDraft[t.id]||{})[c.id]||0)===n?'selected':''}>${n}</option>`).join('')}</select></label>`).join('')}`).join('')}
+      <div class="sum"><span class="muted">0 = schwach, 5 = herausragend</span><button data-act="vote">Stimme abgeben</button></div></section>`;
+  } else {
+    const mine = s.queue.filter(q => q.teamId===myTeam.id && q.type==='support').slice(-5).reverse();
+    body += `<section class="card"><h2>Support anfragen</h2>
+      ${Object.entries(CFG.support).map(([k,v])=>`<button class="sec" style="width:100%;margin:.25rem 0" data-act="support" data-k="${k}">${esc(v.label)} · ${fmtM(v.cost)}</button>`).join('')}
+      <p class="muted">Beratungen bisher: ${myTeam.consults} (ab ${CFG.consultLimit} zusätzlich ${fmtM(CFG.consultPen)}). Testläufe: ${myTeam.tests} (${CFG.freeTests} frei, danach je ${fmtM(CFG.extraTestPen)}).</p>
+      ${mine.length?`<h3>Ihre Anfragen</h3>${mine.map(q=>`<div class="muted">${esc(CFG.support[q.kind].label)}: ${esc(q.status)}</div>`).join('')}`:''}</section>`;
+  }
+  app.innerHTML = head + `<main>${body}</main>`;
+}
+function teamClick(e){
+  const el = e.target.closest('[data-act]'); if (!el) return;
+  const a = el.dataset.act;
+  if (a==='join'){
+    const name=(document.getElementById('jn').value||'').trim(); if (!name){ toast('Bitte Vornamen eintragen.'); return; }
+    me = {name, team:document.getElementById('jt').value, role:document.getElementById('jr').value};
+    localStorage.setItem(JKEY, JSON.stringify(me)); send({t:'join', team:me.team, role:me.role, name:me.name}); return;
+  }
+  if (a==='leave'){ me = Object.assign({}, me, {team:null}); localStorage.setItem(JKEY, JSON.stringify(me)); render(); return; }
+  if (a==='plan'){ const c=document.getElementById('pc'); draft.company = c?c.value:''; send({t:'plan', team:me.team, tier:draft.tier, features:draft.features, company:draft.company}); return; }
+  if (a==='support'){ send({t:'support', team:me.team, kind:el.dataset.k, name:me.name}); return; }
+  if (a==='vote'){ send({t:'vote', team:me.team, scores:voteDraft}); return; }
+}
+function teamChange(e){
+  const el = e.target;
+  if (el.dataset.d==='tier'){ draft.tier = el.value; const c=document.getElementById('pc'); if (c) draft.company=c.value; render(); }
+  if (el.dataset.d==='feat'){ draft.features = el.checked ? [...new Set([...draft.features, el.value])] : draft.features.filter(x=>x!==el.value); const c=document.getElementById('pc'); if (c) draft.company=c.value; render(); }
+  if (el.dataset.v){ voteDraft[el.dataset.v] = voteDraft[el.dataset.v]||{}; voteDraft[el.dataset.v][el.dataset.c] = Number(el.value); }
+}
+
+/* ============================================================
+   CLIENT-VERBINDUNG (Team und Beamer)
+   ============================================================ */
+let retryT = null;
+function onState(s){ pubS = s; if (s.now) clockSkew = s.now - Date.now(); render(); }
+function connectClient(){
+  clearTimeout(retryT);
+  if (typeof Peer !== 'function'){ netStatus='PeerJS nicht geladen – Netz prüfen'; render(); return; }
+  try { if (peer) peer.destroy(); } catch(e) {}
+  netStatus = 'verbinde …'; render();
+  peer = new Peer(undefined, {debug:0});
+  peer.on('open', () => {
+    hostConn = peer.connect(PFX+CODE, {reliable:true});
+    hostConn.on('open', () => { netStatus='verbunden'; hostConn.send({t:'hello', id:myId});
+      if (me && me.team) hostConn.send({t:'join', id:myId, team:me.team, role:me.role, name:me.name}); render(); });
+    hostConn.on('data', d => { if (d && d.t==='state') onState(d.s); else if (d && d.t==='ack') toast(d.msg); });
+    hostConn.on('close', () => { netStatus='Verbindung verloren, neuer Versuch …'; render(); retryT=setTimeout(connectClient, 3000); });
+  });
+  peer.on('error', e => {
+    netStatus = e && e.type==='peer-unavailable' ? 'Sitzung '+CODE+' nicht gefunden. Läuft die Spielleitung?' : 'Netzfehler: '+(e&&e.type||e);
+    render(); retryT = setTimeout(connectClient, 4000);
+  });
+}
+
+/* ============================================================
+   START
+   ============================================================ */
+function render(){
+  const f = document.activeElement && document.activeElement.id;
+  if (MODE==='host') renderHost(); else if (MODE==='beamer') renderBeamer(); else renderTeam();
+  if (f){ const el=document.getElementById(f); if (el) el.focus(); }
+}
+setInterval(() => {
+  const ms = MODE==='host' ? remainingMs(st||{}) : clientRemaining();
+  document.querySelectorAll('[data-timer]').forEach(el => el.textContent = fmtTime(ms));
+}, 1000);
+
+if (MODE==='host'){
+  try { st = JSON.parse(localStorage.getItem(LS)||'null'); } catch(e) { st = null; }
+  if (!st || st.v!==1) st = newState();
+  app.addEventListener('click', hostClick);
+  app.addEventListener('change', hostChange);
+  render();
+  if (st.started) startPeer();
+  window.addEventListener('beforeunload', save);
+} else if (MODE==='beamer'){
+  let local = null; try { local = JSON.parse(localStorage.getItem(LS)||'null'); } catch(e) {}
+  if (local && local.code===CODE && local.started){
+    st = local; pubS = pub(); netStatus = 'lokal';
+    if (bc) bc.onmessage = ev => { if (ev.data && ev.data.t==='state') onState(ev.data.s); };
+    window.addEventListener('storage', ev => { if (ev.key===LS){ try { st = JSON.parse(ev.newValue); pubS = pub(); render(); } catch(e) {} } });
+    render();
+  } else { render(); connectClient(); }
+} else {
+  app.addEventListener('click', teamClick);
+  app.addEventListener('change', teamChange);
+  render(); connectClient();
+}
+</script>
+</body>
+</html>
