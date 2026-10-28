@@ -84,9 +84,10 @@ const CFG = {
   cur: '$',
   startBudget: 17000000,
   tiers: {
-    basis:    {label:'Basis',    cost:0,       desc:'Code-Gerüst für Motoren und Sensor. Die Missionslogik schreibt das Team selbst (mit KI als Coding-Partnerin).'},
-    standard: {label:'Standard', cost:4000000, desc:'Getestete Module für Hinderniserkennung und Rückkehr. Das Team integriert und passt an.'},
-    premium:  {label:'Premium',  cost:8000000, desc:'Vollständige Missionslogik. Das Team konfiguriert nur noch.'}
+    // desc sehen die Teams vor dem Kauf, reveal erst nach Übernahme des Plans (Informationsasymmetrie)
+    basis:    {label:'Basis',    cost:0,       desc:'Kostenloser Grundcode. Was er kann, sehen Sie nach dem Kauf.', reveal:'Grundcode mit bekannten Schwächen. Fehler müssen Sie selbst finden und beheben.'},
+    standard: {label:'Standard', cost:4000000, desc:'Mittlere Preisstufe. Was der Code kann, sehen Sie nach dem Kauf.', reveal:'Fehlerfreier Code, Steuerung per WLAN.'},
+    premium:  {label:'Premium',  cost:8000000, desc:'Höchste Preisstufe. Was der Code kann, sehen Sie nach dem Kauf.', reveal:'Fehlerfreier Code, Steuerung per Bluetooth (BLE), stabilste Verbindung.'}
   },
   features: {
     probe:    {label:'Probenaufnahme (Gabelstapler)', cost:1500000},
@@ -105,23 +106,31 @@ const CFG = {
     {id:'rueckkehr', label:'Kehrt zur Basis zurück'}
   ],
   criteria: [
-    {id:'inno',  label:'Innovationsgrad'},
-    {id:'tech',  label:'Technische Umsetzung'},
-    {id:'pitch', label:'Pitch & Marktlogik'}
+    {id:'pflicht', label:'Pflichterfüllung'},
+    {id:'stab',    label:'Stabilität im Einsatz'},
+    {id:'feat',    label:'Integration der Zusatzfunktionen'},
+    {id:'invest',  label:'Begründung der Investitionen'},
+    {id:'wert',    label:'Kommunikation des Werts'}
   ],
-  roles: ['Engineering','Marketing','Finance'],
+  roles: ['Leitung','Hardware-Engineering','Software-Engineering','Finance','Marketing & Sales'],
+  extraPen: {
+    pitchChange: {label:'Konzeptänderung nach Pitch 1', cost:200000},
+    freezeAdd:   {label:'Ergänzung nach Design Freeze', cost:500000},
+    rule:        {label:'Regel- oder Zeitverstoß',      cost:100000}
+  },
   bonus: 1000000, freeTests: 2, extraTestPen: 500000,
-  consultLimit: 3, consultPen: 500000, alignPen: 500000, safeReturnSec: 15
+  consultLimit: 3, consultPen: 500000, alignPen: 500000,
+  safeReturnLabel: 'Sichere Rückkehr zur Basis im Zeitlimit'
 };
 const PHASES = [
   {id:'p0', nr:'0',  name:'Einführung',              min:60,  desc:'Mission, Rollen, Budget und Spielregeln. Teams bilden und per QR-Code beitreten.'},
   {id:'p1', nr:'1',  name:'Planung & Design',        min:10,  desc:'Rollen verteilen, Code-Stufe und Zusatzfunktionen festlegen, Budgetplan einreichen.'},
   {id:'p2', nr:'2',  name:'Bau',                     min:120, desc:'Rover bauen und programmieren. Support-Leistungen werden verbucht.'},
-  {id:'p2a',nr:'2A', name:'Pitch 1',                 min:20,  desc:'Teams pitchen ihre Innovationsstrategie. Danach ist die Strategie fixiert.'},
-  {id:'p3', nr:'3',  name:'Validierung & Test',      min:10,  desc:'Testläufe auf dem simulierten Gelände. Die ersten zwei Läufe sind frei.'},
-  {id:'p4', nr:'4',  name:'Alignment-Check',         min:10,  desc:'Engineering, Marketing und Finance erklären dieselbe Strategie. Fehlende Abstimmung kostet.'},
+  {id:'p2a',nr:'2A', name:'Pitch 1',                 min:20,  desc:'Leitung, Finance und Marketing pitchen die Strategie (3 Min.), Engineering baut weiter. Danach kostet jede Konzeptänderung.'},
+  {id:'p3', nr:'3',  name:'Validierung & Test',      min:10,  desc:'Testläufe auf dem Gelände, Pflichtanforderungen prüfen, Go/No-Go entscheiden. Zwei Läufe sind frei.'},
+  {id:'p4', nr:'4',  name:'Alignment-Check',         min:10,  desc:'Design Freeze. Jede Rolle erklärt Strategie, Kernfunktion und Budgetlage. Fehlende Abstimmung kostet.'},
   {id:'p5', nr:'5',  name:'Final-Pitch & Live-Test', min:30,  desc:'Abschlusspräsentation und Live-Test vor allen Teams.'},
-  {id:'p6', nr:'6',  name:'Voting & Ergebnis',       min:15,  desc:'Peer-Voting und Auflösung des Rankings.'}
+  {id:'p6', nr:'6',  name:'Voting & Ergebnis',       min:15,  desc:'Eine Stimme pro Team, keine Eigenstimme. Danach Ranking und Reflexion.'}
 ];
 const FORMATS = {
   woche1:  {label:'Modulwoche 1 (225 Min. = 90 + 90 + 45)', skip:[], minutes:{p0:20,p1:15,p2:100,p2a:15,p3:10,p4:10,p5:40,p6:15}, note:'Vorlesung (2 TWS) und Übung (3 TWS) der ersten Woche zusammengelegt.'},
@@ -179,7 +188,7 @@ function fmtTime(ms){
    ============================================================ */
 function newTeam(name){
   return {id:uid(), name, company:'', tier:null, features:[], ledger:[], tests:0, consults:0,
-          alignFail:false, mandatory:{}, safe:false, failure:false, members:[], plan:null};
+          alignFail:false, mandatory:{}, safe:false, failure:false, members:[], plan:null, extra:{}};
 }
 function newState(){
   return {v:1, code:'HSU26', date:new Date().toISOString().slice(0,10), facilitator:'', format:'woche1',
@@ -194,7 +203,8 @@ function calc(t, s){
   const testPen  = Math.max(0, t.tests-CFG.freeTests)*CFG.extraTestPen;
   const consultPen = t.consults>=CFG.consultLimit ? CFG.consultPen : 0;
   const alignPen = t.alignFail ? CFG.alignPen : 0;
-  const pen = testPen+consultPen+alignPen;
+  const extraPen = Object.entries(CFG.extraPen).reduce((a,[k,v])=>a+((t.extra||{})[k]||0)*v.cost,0);
+  const pen = testPen+consultPen+alignPen+extraPen;
   const rest = CFG.startBudget - tierCost - featCost - supCost - pen;
   const allReq = CFG.mandatory.every(m => t.mandatory[m.id]);
   const live = s ? atOrAfter(s,'p5') : false;
@@ -210,7 +220,7 @@ function pub(){
   return {code:st.code, started:st.started, phase:st.phase, format:st.format, phaseEnd:st.phaseEnd, paused:st.paused,
     skip:(FORMATS[st.format]||{}).skip||[], reveal:st.reveal, now:Date.now(),
     teams: st.teams.map(t => { const c=calc(t,st); return {id:t.id, name:t.name, company:t.company, tier:t.tier, features:t.features,
-      rest:c.rest, tests:t.tests, consults:t.consults, members:t.members.map(m=>({id:m.id,name:m.name,role:m.role})),
+      rest:c.rest, reveal: t.plan&&t.plan.applied&&t.tier ? CFG.tiers[t.tier].reveal : null, tests:t.tests, consults:t.consults, members:t.members.map(m=>({id:m.id,name:m.name,role:m.role})),
       planStatus: t.plan ? (t.plan.applied?'übernommen':'eingereicht') : null,
       result: st.reveal ? {bonus:c.bonus, votePts:c.votePts, voteVal:c.voteVal, total:c.total, allReq:c.allReq} : null}; }),
     queue: st.queue.map(q => ({qid:q.qid, type:q.type, teamId:q.teamId, kind:q.kind||null, status:q.status})),
@@ -283,7 +293,7 @@ function onClientMsg(c, d){
       if (st.phase!=='p6') return ack('Voting ist erst in Phase 6 geöffnet.');
       const scores = {};
       st.teams.forEach(t => { if (t.id!==d.team && d.scores && d.scores[t.id]) { scores[t.id]={}; CFG.criteria.forEach(k => scores[t.id][k.id]=Math.max(0,Math.min(5,Number(d.scores[t.id][k.id])||0))); } });
-      st.votes[d.id] = {voterTeam:d.team, scores, at:Date.now()};
+      st.votes[d.team] = {voterTeam:d.team, by:d.id, scores, at:Date.now()};
       commit(); return ack('Stimme gespeichert.');
     }
   }
@@ -364,10 +374,11 @@ function renderHost(){
       <h3>Support & Tests</h3><div class="row">${Object.entries(CFG.support).map(([k,v])=>`<button class="sec sm" data-act="book" data-id="${t.id}" data-k="${k}">+ ${esc(v.label)}</button>`).join('')}
         <button class="sec sm" data-act="test" data-id="${t.id}">+ Testlauf (${t.tests})</button>
         <button class="sec sm" data-act="undo" data-id="${t.id}" ${t.ledger.length?'':'disabled'}>Letzte Buchung zurück</button></div>
+      <h3>Weitere Abzüge</h3><div class="row">${Object.entries(CFG.extraPen).map(([k,v])=>`<button class="sec sm" data-act="xpen" data-id="${t.id}" data-k="${k}">+ ${esc(v.label)} (${(t.extra||{})[k]||0})</button><button class="sec sm" data-act="xpenm" data-id="${t.id}" data-k="${k}" aria-label="${esc(v.label)} zurücknehmen">−</button>`).join('')}</div>
       <p class="muted">Beratungen: ${t.consults} · Abzüge: ${fmtM(c.pen)} · Support: ${fmtM(c.supCost)}</p>
       <label class="chk"><input type="checkbox" data-tf="align" data-id="${t.id}" ${t.alignFail?'checked':''}> Alignment fehlt (−${fmtM(CFG.alignPen)})</label>
       <h3>Live-Test</h3>${CFG.mandatory.map(m=>`<label class="chk"><input type="checkbox" data-tf="mand" data-id="${t.id}" data-k="${m.id}" ${t.mandatory[m.id]?'checked':''}> ${esc(m.label)}</label>`).join('')}
-      <label class="chk"><input type="checkbox" data-tf="safe" data-id="${t.id}" ${t.safe?'checked':''}> Sichere Rückkehr in ≤ ${CFG.safeReturnSec} s</label>
+      <label class="chk"><input type="checkbox" data-tf="safe" data-id="${t.id}" ${t.safe?'checked':''}> ${esc(CFG.safeReturnLabel)}</label>
       <label class="chk"><input type="checkbox" data-tf="failure" data-id="${t.id}" ${t.failure?'checked':''}> Systemausfall aufgetreten</label>
       <p class="muted">Mitglieder: ${t.members.map(m=>esc(m.name)+' ('+esc(m.role)+')').join(', ')||'–'}</p></section>`; }).join('')}</div>`;
   }
@@ -411,6 +422,8 @@ function hostClick(e){
     case 'plus': if (st.paused!=null) st.paused += 120000; else st.phaseEnd += 120000; break;
     case 'book': if (t) bookSupport(t, el.dataset.k); break;
     case 'test': if (t) t.tests++; break;
+    case 'xpen': if (t){ t.extra=t.extra||{}; t.extra[el.dataset.k]=(t.extra[el.dataset.k]||0)+1; } break;
+    case 'xpenm': if (t){ t.extra=t.extra||{}; t.extra[el.dataset.k]=Math.max(0,(t.extra[el.dataset.k]||0)-1); } break;
     case 'undo': if (t && t.ledger.length){ const e2=t.ledger.pop(); if (e2.kind==='beratung') t.consults=Math.max(0,t.consults-1); } break;
     case 'qok': case 'qno': {
       const q = st.queue.find(x => x.qid===el.dataset.q); if (!q) return;
@@ -523,6 +536,7 @@ function renderTeam(){
     <p>Sie: <b>${esc(me.name)}</b> (${esc(me.role)}) · <button class="sec sm" data-act="leave">Team wechseln</button></p>
     <p>Phase ${esc(ph.nr)}: <b>${esc(ph.name)}</b> · <span class="timer" data-timer>${fmtTime(clientRemaining())}</span></p>
     <p>Restbudget: <span class="money ${myTeam.rest<0?'neg':''}">${fmtM(myTeam.rest)}</span></p>
+    ${myTeam.reveal?`<p><span class="pill t">Ihr Code: ${esc(CFG.tiers[myTeam.tier].label)}</span> ${esc(myTeam.reveal)}</p>`:''}
     <p class="muted">${esc(ph.desc)}</p></section>`;
   if (s.reveal){
     const r = s.teams.filter(t=>t.result).sort((a,b)=>b.result.total-a.result.total);
@@ -538,8 +552,8 @@ function renderTeam(){
       <div class="sum"><span>Geplant: <b class="money">${fmtM(cost)}</b><br><span class="muted">Rest: ${fmtM(CFG.startBudget-cost)}</span></span><button data-act="plan">Plan einreichen</button></div></section>`;
   } else if (s.phase==='p6'){
     const others = s.teams.filter(t => t.id!==myTeam.id);
-    const done = s.voted.includes(myId);
-    body += `<section class="card"><h2>Peer-Voting</h2>${done?'<p><span class="pill on">Stimme abgegeben</span> Sie können sie bis zum Ende ändern.</p>':''}
+    const done = s.voted.includes(myTeam.id);
+    body += `<section class="card"><h2>Peer-Voting</h2><p class="muted">Eine Stimme pro Team: Die zuletzt abgegebene zählt. Stimmen Sie sich ab.</p>${done?'<p><span class="pill on">Stimme Ihres Teams liegt vor</span></p>':''}
       ${others.map(t=>`<h3>${esc(t.name)}</h3>${CFG.criteria.map(c=>`<label>${esc(c.label)}<br><select data-v="${t.id}" data-c="${c.id}">${[0,1,2,3,4,5].map(n=>`<option ${Number((voteDraft[t.id]||{})[c.id]||0)===n?'selected':''}>${n}</option>`).join('')}</select></label>`).join('')}`).join('')}
       <div class="sum"><span class="muted">0 = schwach, 5 = herausragend</span><button data-act="vote">Stimme abgeben</button></div></section>`;
   } else {
