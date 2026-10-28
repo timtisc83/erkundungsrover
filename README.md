@@ -14,8 +14,14 @@ Eine Datei (`index.html`), drei Ansichten:
 
 1. Vorher: Spielleitung öffnen, Sitzungscode `HSU26` belassen (dann bleibt der QR-Code auf den Folien gültig), Format wählen (`Modulwoche 1` oder `Kurzdemo` für die Lehrprobe), Teams anlegen, „Sitzung starten“.
 2. Beamer-Ansicht im zweiten Tab bzw. auf dem Beamer öffnen.
-3. Studierende scannen den QR-Code, wählen Team, Rolle (Engineering, Marketing, Finance) und Vornamen.
+3. Studierende scannen den QR-Code, wählen Team, Rolle (Leitung, Hardware-Engineering, Software-Engineering, Finance, Marketing & Sales) und Vornamen.
 4. Phasen 0 bis 6 über die Spielleitung weiterschalten.
+
+## Regeln (Stand: angeglichen an die Masterarbeit zur Simulation)
+
+- Code-Stufen Basis / Standard / Premium (0 / 4 / 8 Mio. $). Was der Code kann, sehen die Teams erst nach Übernahme ihres Plans.
+- Abzüge: zusätzliche Testläufe, mehr als 3 Beratungen, fehlendes Alignment, Konzeptänderung nach Pitch 1 (0,2 Mio.), Ergänzung nach Design Freeze (0,5 Mio.), Regel- oder Zeitverstoß (0,1 Mio.).
+- Voting: eine Stimme pro Team (die zuletzt abgegebene zählt), keine Eigenstimme, fünf Kriterien von 0 bis 5: Pflichterfüllung, Stabilität im Einsatz, Integration der Zusatzfunktionen, Begründung der Investitionen, Kommunikation des Werts.
 
 ## Technik und Risiken
 
