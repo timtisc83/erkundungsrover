@@ -2,38 +2,45 @@
 
 Deutschsprachige Spielleitungs- und Team-App für die Rover-Simulation in Woche 1 des Moduls „Technologie- und Innovationsmanagement“ (TIM). Weiterentwicklung von `lunar_rover_game` (Konzept gefördert durch die Claussen-Simon-Stiftung).
 
-Eine Datei (`index.html`), drei Ansichten:
+`index.html` (Layout) und `js/er1.js` bis `js/er4.js` (Logik), drei Ansichten:
 
 | Ansicht | URL | Zweck |
 |---|---|---|
-| Spielleitung | `https://timtisc83.github.io/erkundungsrover/?host=true` | Sitzung anlegen, Phasen steuern, Budgets buchen, Anfragen, Export |
-| Beamer | `https://timtisc83.github.io/erkundungsrover/?view=beamer&s=HSU26` | Phase, Timer, Budgets, QR-Code für den Saal |
-| Team (Smartphone) | `https://timtisc83.github.io/erkundungsrover/?s=HSU26` | Beitritt, Planung, Support-Anfragen, Voting |
+| Spielleitung | `.../erkundungsrover/?host=true` | Sitzung anlegen, Teams auslosen, Phasen steuern, Anfragen buchen, Export |
+| Beamer | `.../erkundungsrover/?view=beamer&s=HSU26` | Phase, Schritte, Timer, Budgets, QR-Code und Teamlisten |
+| Team (Smartphone) | `.../erkundungsrover/?s=HSU26` | Beitritt, eigene Rolle und Aufgabe pro Phase, Planung, Support und Testläufe, Voting |
 
 ## Ablauf in der Veranstaltung
 
-1. Vorher: Spielleitung öffnen, Sitzungscode `HSU26` belassen (dann bleibt der QR-Code auf den Folien gültig), Format wählen (`Modulwoche 1` oder `Kurzdemo` für die Lehrprobe), Teams anlegen, „Sitzung starten“.
+1. Vorher: Spielleitung öffnen, Sitzungscode `HSU26` belassen (dann bleibt der QR-Code auf den Folien gültig), Format wählen (`Modulwoche 1` oder `Kurzdemo` für die Lehrprobe), „Sitzung starten“.
 2. Beamer-Ansicht im zweiten Tab bzw. auf dem Beamer öffnen.
-3. Studierende scannen den QR-Code, wählen Team, Rolle (Leitung, Hardware-Engineering, Software-Engineering, Finance, Marketing & Sales) und Vornamen.
-4. Phasen 0 bis 6 über die Spielleitung weiterschalten.
+3. Alle Studierenden scannen den QR-Code mit dem eigenen Smartphone und treten mit Vornamen bei.
+4. „Teams auslosen“: Teams mit 4 bis 6 Personen (bevorzugt 5), Rollen werden zufällig verteilt. Jedes Smartphone zeigt Team, Rolle und die Aufgabe der Rolle in der aktuellen Phase.
+   - 5 Personen: Leitung, Hardware-Engineering, Software-Engineering, Finance, Marketing & Sales.
+   - 4 Personen: Finance und Leitung in einer Person.
+   - 6 Personen: zusätzlich Hardware- bzw. Software-Engineering.
+   - Nachzügler werden automatisch dem kleinsten Team mit der fehlenden Rolle zugelost. Rolle und Team lassen sich unter „Teams & Buchungen“ manuell ändern.
+5. Phasen 0 bis 6 über die Spielleitung weiterschalten.
 
-## Regeln (Stand: angeglichen an die Masterarbeit zur Simulation)
+## Rechte im Team
 
-- Code-Stufen Basis / Standard / Premium (0 / 4 / 8 Mio. $). Was der Code kann, sehen die Teams erst nach Übernahme ihres Plans.
-- Abzüge: zusätzliche Testläufe, mehr als 3 Beratungen, fehlendes Alignment, Konzeptänderung nach Pitch 1 (0,2 Mio.), Ergänzung nach Design Freeze (0,5 Mio.), Regel- oder Zeitverstoß (0,1 Mio.).
-- Voting: eine Stimme pro Team (die zuletzt abgegebene zählt), keine Eigenstimme, fünf Kriterien von 0 bis 5: Pflichterfüllung, Stabilität im Einsatz, Integration der Zusatzfunktionen, Begründung der Investitionen, Kommunikation des Werts.
+- Den Budgetplan (Code-Stufe, Zusatzfunktionen, Produktname) reicht nur Finance ein; alle anderen können mitrechnen.
+- Support (Beratung, Notfall-Debugging, Re-Test) und Testläufe kann jede Person anfragen. Die Anfrage geht zuerst an Finance zur Freigabe, danach an die Spielleitung („Buchen“ bzw. „Durchgeführt“). Anfragen von Finance gehen direkt an die Spielleitung.
+- Testläufe: 2 frei, jeder weitere 0,5 Mio. Abzug. Der Preis des nächsten Testlaufs wird in der App angezeigt.
+- Die Teamstimme im Voting gibt die Leitung ab.
 
 ## Technik und Risiken
 
-- Synchronisation zwischen Geräten über WebRTC (PeerJS 1.5.4, öffentlicher PeerJS-Broker). Ein Beamer-Tab im selben Browser synchronisiert zusätzlich lokal.
-- **Vor Ort testen.** Hochschulnetze blockieren WebRTC teilweise. Fallback: mobiler Hotspot. Notfalls bucht die Spielleitung allein, Teams melden mündlich.
-- Keine Server, keine Accounts. Gespeichert werden nur frei gewählte Vornamen, Team und Rolle, im Browser der Spielleitung. Export als CSV/JSON.
-- Regeln (Budget, Code-Stufen, Boni, Abzüge, Phasen, Formate) stehen gebündelt in `CFG`, `PHASES` und `FORMATS` am Anfang des Skripts. Die Wertung (Stimmen × Punktwert) ist eine Annahme und sollte gegen die Originalregeln geprüft werden.
+- Synchronisation zwischen Geräten über WebRTC (PeerJS 1.5.4, öffentlicher PeerJS-Broker). Ein Beamer-Tab im selben Browser synchronisiert zusätzlich lokal (localStorage, BroadcastChannel).
+- **Vor Ort testen.** Hochschulnetze blockieren WebRTC teilweise. Fallback: Laptop und Studierende über einen mobilen Hotspot; notfalls läuft die Spielleitung allein (Teams melden mündlich, Buchung durch die Spielleitung).
+- Keine Server, keine personenbezogenen Daten außer frei gewählten Vornamen; Daten liegen im Browser der Spielleitung. Export als CSV/JSON.
+- Regeln und Texte (Budget, Preise, Paketinhalte, Rollen, Boni, Strafen, Phasen mit Schritten und Rollenaufgaben, Formate) stehen gebündelt in `CFG`, `PHASES`, `FORMATS` in `js/er1.js`.
+- Der Zustand liegt unter dem Schlüssel `odce_erkundungsrover_state_v2`; ältere Sitzungen werden nicht übernommen.
 
 ## Veröffentlichung
 
-GitHub Pages: Settings → Pages → Branch `main`, Ordner `/ (root)`. Danach ist die Seite unter der oben genannten URL erreichbar.
+GitHub Pages aus `main`, Root. Team-URL: `https://timtisc83.github.io/erkundungsrover/?s=HSU26`, Spielleitung: `https://timtisc83.github.io/erkundungsrover/?host=true`. Nach einem Push dauert die Aktualisierung einige Minuten.
 
 ## Lizenz
 
-Code: MIT (wie das Original `lunar_rover_game`). Lehrmaterial: CC BY 4.0.
+Code: MIT (wie Original). Lehrmaterial: CC BY 4.0.
