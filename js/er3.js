@@ -8,7 +8,7 @@ function drawPreview(){
   const n = allPlayers().length; if (!n) return 'Noch niemand beigetreten.';
   const sz = teamSizes(n);
   const bad = sz.some(x=>x<CFG.teamMin||x>CFG.teamMax);
-  return `${n} Personen → ${sz.length} Team${sz.length>1?'s':''} (${sz.join(', ')})${bad?` <span class="pill off">nicht alle Teams ${CFG.teamMin}–${CFG.teamMax} Personen</span>`:''}`;
+  return `${n} Personen → ${sz.length} Team${sz.length>1?'s':''} (${sz.join(', ')})${sz.length<2?' <span class="pill off">Voting braucht mindestens 2 Teams (ab 8 Personen)</span>':''}${bad?` <span class="pill off">nicht alle Teams ${CFG.teamMin}–${CFG.teamMax} Personen</span>`:''}`;
 }
 function qLabel(q, t){
   if (q.type==='plan' && t.plan) return `Plan: ${esc(CFG.tiers[t.plan.tier].label)}${t.plan.features.length?' + '+t.plan.features.map(f=>esc(CFG.features[f].label)).join(', '):''}${t.plan.company?' · Produkt „'+esc(t.plan.company)+'“':''}`;
@@ -216,7 +216,8 @@ function renderBeamer(){
     <p class="ph">Phase ${esc(ph.nr)}</p><h1>${esc(ph.name)}</h1><p class="desc">${esc(ph.desc)}</p>
     <p class="timer" data-timer>${fmtTime(clientRemaining())}</p>
     <ol class="bsteps">${li(ph.steps)}</ol>
-    <p class="desc"><b>Ergebnis:</b> ${esc(ph.result)} <span style="color:#aab">· Ihre Rollenaufgabe steht auf dem Smartphone.</span></p>
+    ${s.reveal?'':`<h2 class="brh">Wer macht was</h2><table class="brt"><tbody>${Object.entries(ph.roles).map(([k,txt])=>`<tr><td>${esc(CFG.areaLabel[k])}</td><td>${esc(txt)}</td></tr>`).join('')}</tbody></table>`}
+    <p class="desc"><b>Ergebnis:</b> ${esc(ph.result)} <span style="color:#aab">· In 4er-Teams übernimmt eine Person Finance und Leitung.</span></p>
     </div><div>${right}</div></div>`;
 }
 
@@ -226,4 +227,3 @@ function clientRemaining(){
   if (s.paused!=null) return s.paused;
   return s.phaseEnd ? s.phaseEnd - (Date.now()+clockSkew) : null;
 }
-
