@@ -219,6 +219,7 @@ function onClientMsg(c, d){
     case 'vote': {
       if (!hasArea(role,'lead')) return ack('Die Teamstimme gibt die Leitung ab.');
       if (st.phase!=='p6') return ack('Voting ist erst in Phase 6 geöffnet.');
+      if (st.teams.length<2) return ack('Nur ein Team: Ohne andere Teams ist keine Stimme möglich.');
       const scores = {};
       st.teams.forEach(t => { if (t.id!==team.id && d.scores && d.scores[t.id]) { scores[t.id]={}; CFG.criteria.forEach(k => scores[t.id][k.id]=Math.max(0,Math.min(5,Number(d.scores[t.id][k.id])||0))); } });
       st.votes[team.id] = {voterTeam:team.id, by:d.id, scores, at:Date.now()};
@@ -283,4 +284,3 @@ function det(id, title, inner, dflt){
   return `<details data-det="${id}" ${open?'open':''}><summary>${title}</summary><div class="detb">${inner}</div></details>`;
 }
 document.addEventListener('toggle', e => { const d=e.target; if (d && d.dataset && d.dataset.det) openDet[d.dataset.det] = d.open; }, true);
-
