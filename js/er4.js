@@ -79,7 +79,8 @@ function renderTeam(){
   } else if (s.phase==='p6'){
     const others = s.teams.filter(t => t.id!==myTeam.id);
     const done = s.voted.includes(myTeam.id);
-    body += isLead ? `<section class="card"><h2>Peer-Voting</h2><p class="muted">Sie geben die Stimme für Ihr Team ab. Diskutieren Sie vorher im Team. Die zuletzt abgegebene Stimme zählt.</p>${done?'<p><span class="pill on">Stimme Ihres Teams liegt vor</span></p>':''}
+    if (!others.length) body += `<section class="card"><h2>Peer-Voting</h2><p>Es gibt nur ein Team. Ohne andere Teams ist keine Stimme möglich (keine Eigenstimme). Für einen Test braucht die Spielleitung mindestens 2 Teams, also mindestens 8 Personen oder Teams manuell aufteilen.</p></section>`;
+    else body += isLead ? `<section class="card"><h2>Peer-Voting</h2><p class="muted">Sie geben die Stimme für Ihr Team ab. Diskutieren Sie vorher im Team. Die zuletzt abgegebene Stimme zählt.</p>${done?'<p><span class="pill on">Stimme Ihres Teams liegt vor</span></p>':''}
       ${others.map(t=>`<h3>${esc(t.name)}${t.company?' · '+esc(t.company):''}</h3>${CFG.criteria.map(c=>`<label>${esc(c.label)}<br><select data-v="${t.id}" data-c="${c.id}">${[0,1,2,3,4,5].map(n=>`<option ${Number((voteDraft[t.id]||{})[c.id]||0)===n?'selected':''}>${n}</option>`).join('')}</select></label>`).join('')}`).join('')}
       <div class="sum"><span class="muted">0 = schwach, 5 = herausragend</span><button data-act="vote">Stimme abgeben</button></div></section>`
       : `<section class="card"><h2>Peer-Voting</h2><p>Die Teamstimme gibt ${esc(leadP)} ab. Bewertet werden: ${CFG.criteria.map(c=>esc(c.label)).join(' · ')} (je 0–5).</p>${done?'<p><span class="pill on">Stimme Ihres Teams liegt vor</span></p>':''}</section>`;
@@ -112,7 +113,11 @@ function teamClick(e){
   if (a==='plan'){ const c=document.getElementById('pc'); draft.company = c?c.value:draft.company; send({t:'plan', tier:draft.tier, features:draft.features, company:draft.company}); return; }
   if (a==='req'){ send({t:'req', kind:el.dataset.k}); return; }
   if (a==='fin'){ send({t:'fin', qid:el.dataset.q, ok:el.dataset.ok==='1'}); return; }
-  if (a==='vote'){ send({t:'vote', scores:voteDraft}); return; }
+  if (a==='vote'){
+    const others = (pubS&&pubS.teams||[]).filter(t=>!t.members.some(m=>m.id===myId));
+    if (!others.length){ toast('Kein anderes Team vorhanden.'); return; }
+    const sc = {}; others.forEach(t=>{ sc[t.id]={}; CFG.criteria.forEach(c=>sc[t.id][c.id]=Number((voteDraft[t.id]||{})[c.id]||0)); });
+    send({t:'vote', scores:sc}); return; }
 }
 function teamChange(e){
   const el = e.target;
